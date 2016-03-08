@@ -1,0 +1,8 @@
+*.pyc
+bot_conf.py
+bin
+include
+lib
+local
+share
+.idea

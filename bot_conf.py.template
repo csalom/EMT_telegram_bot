@@ -1,0 +1,7 @@
+#!/usr/bin/env
+# -*- coding: utf-8 -*-
+
+# ################# BOT TOKEN #####################
+BOT_TOKEN = "BOT_TOKEN"
+BASE_URL = "http://pasoporparada.emtpalma.es/EMTPalma/Front/pasoporparada.es.svr"
+CHAT_ID = "CHAT_ID"
