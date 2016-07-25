@@ -20,44 +20,36 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 
+NEW_LINE = "\n"
+
 
 class EMTBot(object):
     def __init__(self):
-        logger.info('[INIT] Starting')
+        logger.debug('[INIT] Starting')
 
-    def get_info_bus(self, bus_info, clave, bot, chat_id):
+    @staticmethod
+    def get_info_bus(bus_info, clave, bot, chat_id):
         # Parsing to telegram messages bus information
+        text = ""
         if "seconds" in bus_info[clave] and "destino" in bus_info[clave]:
             if bus_info[clave]['enParada']:
-                bot.sendMessage(chat_id=chat_id, text="Bus a la aturada")
+                text += "Bus a la aturada"
             elif bus_info[clave]['llegando']:
-                bot.sendMessage(chat_id=chat_id,
-                                text="Bus arribant a la aturada")
+                text += "Bus arribant a la aturada"
             else:
-                res = "Temps estimat a l'aturada: {} minuts".format(
+                text += "Temps estimat a l'aturada: {} minuts".format(
                         bus_info[clave]['seconds']/60)
                 if bus_info[clave]['seconds'] % 60 != 0:
-                    res += " i {} segons".format(
+                    text += " i {} segons".format(
                             bus_info[clave]['seconds'] % 60)
-                bot.sendMessage(chat_id=chat_id, text=res)
-
-    def get_stop(self, bot, update):
-        logger.info(update.message.chat_id)
-        logger.info(update.message.text)
-        try:
-            bus_stop = update.message.text.split()[1]
-        except IndexError:
-            bot.sendMessage(chat_id=update.message.chat_id,
-                            text="Aturada no introduida")
-            return
-        self.get_stop_info(bot, update.message.chat_id, bus_stop)
+        return text + NEW_LINE
 
     def get_stop_info(self, bot, chat_id, bus_stop='572'):
         url = "{}?p={}".format(BASE_URL, bus_stop)
-        logger.info(url)
+        # logger.debug(url)
         resp = requests.get(url)
         stop_info = resp.json()
-        logger.info(resp.json())
+        # logger.debug(resp.json())
 
         # Example of response
         # {u'error': False,
@@ -84,16 +76,31 @@ class EMTBot(object):
                 bot.sendMessage(chat_id=chat_id, text=text)
             else:
                 for bus_info in stop_info['estimaciones']:
-                    bus_line = "Línia: {}".format(bus_info['line'])
-                    bot.sendMessage(chat_id=chat_id, text=bus_line)
+                    bus_line = "Línia: {}{}".format(bus_info['line'],
+                                                    NEW_LINE)
+                    # bot.sendMessage(chat_id=chat_id, text=bus_line)
                     if "seconds" in bus_info['vh_first'] and "destino" in bus_info['vh_first']:
-                        self.get_info_bus(bus_info, "vh_first", bot, chat_id)
+                        bus_line += self.get_info_bus(bus_info, "vh_first",
+                                                      bot, chat_id)
                     if "seconds" in bus_info['vh_second'] and "destino" in bus_info['vh_second']:
-                        self.get_info_bus(bus_info, "vh_second", bot, chat_id)
+                        bus_line += self.get_info_bus(bus_info, "vh_second",
+                                                      bot, chat_id)
+                    bot.sendMessage(chat_id=chat_id, text=bus_line)
         else:
             bot.sendMessage(chat_id=chat_id,
                             text="Error a la petició!")
             logger.debug("Error: {}".format(stop_info['errorMessage']))
+
+    def get_stop(self, bot, update):
+        # logger.debug(update.message.chat_id)
+        # logger.debug(update.message.text)
+        try:
+            bus_stop = update.message.text.split()[1]
+        except IndexError:
+            bot.sendMessage(chat_id=update.message.chat_id,
+                            text="Aturada no introduida")
+            return
+        self.get_stop_info(bot, update.message.chat_id, bus_stop)
 
     def run(self):
         dispatcher.addTelegramCommandHandler('aturada', self.get_stop)
