@@ -38,7 +38,7 @@ class EMTBot(object):
                 text += "Bus arribant a la aturada"
             else:
                 text += "Temps estimat a l'aturada: {} minuts".format(
-                        bus_info[clave]['seconds']/60)
+                        int(bus_info[clave]['seconds']/60))
                 if bus_info[clave]['seconds'] % 60 != 0:
                     text += " i {} segons".format(
                             bus_info[clave]['seconds'] % 60)
